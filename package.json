@@ -1,0 +1,28 @@
+{
+  "name": "vegan-muscle-tracker",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Barcode- und Foto-basierter Nährwert-Tracker mit veganem Ernährungsplan für Muskelaufbau",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "html5-qrcode": "^2.3.8",
+    "idb": "^8.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tesseract.js": "^5.1.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.3",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10",
+    "vite-plugin-pwa": "^0.20.5"
+  }
+}
