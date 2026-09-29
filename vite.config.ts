@@ -2,7 +2,11 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
+// Served from https://<user>.github.io/garmin-claude-connector/ via GitHub Pages.
+const base = "/garmin-claude-connector/";
+
 export default defineConfig({
+  base,
   plugins: [
     react(),
     VitePWA({
@@ -16,7 +20,8 @@ export default defineConfig({
         theme_color: "#16a34a",
         background_color: "#0b1120",
         display: "standalone",
-        start_url: "/",
+        start_url: base,
+        scope: base,
         icons: [
           {
             src: "icons/icon-192.png",
