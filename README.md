@@ -22,6 +22,12 @@ plan generator geared toward muscle building.
 - **Vegan meal plan**: a generated example day (breakfast/snacks/lunch/dinner)
   scaled to your targets, plus muscle-building recommendations (protein
   timing, B12/iron/omega-3/creatine, hydration, sleep).
+- **Garmin training data** (optional): connect the small backend in
+  [`server/`](server/README.md) to pull today's training readiness, body
+  battery, resting heart rate, respiration, sleep and recent activities, and
+  optionally let logged training calories refine your daily kcal/macro
+  targets instead of a flat activity-level guess. Uses the unofficial Garmin
+  Connect API — see the caveats in `server/README.md`.
 
 ### Development
 

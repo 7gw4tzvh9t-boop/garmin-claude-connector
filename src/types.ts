@@ -53,3 +53,32 @@ export interface UserProfile {
 }
 
 export interface Targets extends Macros {}
+
+export interface GarminConfig {
+  baseUrl: string;
+  apiKey: string;
+  /** Use today's logged Garmin activity calories to refine the kcal/macro targets. */
+  useForTargets: boolean;
+}
+
+export interface GarminActivity {
+  activityId: number;
+  activityName: string;
+  startTimeLocal: string;
+  activityType?: { typeKey?: string };
+  duration?: number;
+  calories?: number;
+  averageHR?: number;
+}
+
+export interface GarminHealthSnapshot {
+  date: string;
+  heartRate: unknown;
+  sleep: unknown;
+  steps: unknown;
+  trainingReadiness: unknown;
+  trainingStatus: unknown;
+  bodyBattery: unknown;
+  respiration: unknown;
+  stress: unknown;
+}

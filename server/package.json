@@ -1,0 +1,20 @@
+{
+  "name": "vegangains-garmin-server",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Small proxy backend that logs into Garmin Connect (unofficial API) and exposes health/training data to the VeganGains Tracker frontend.",
+  "type": "commonjs",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "garmin-connect": "^1.6.2"
+  }
+}

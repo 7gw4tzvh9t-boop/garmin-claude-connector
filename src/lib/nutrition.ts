@@ -48,22 +48,50 @@ export function calculateTdee(profile: UserProfile): number {
 }
 
 /**
- * Derives daily macro targets for a vegan muscle-building diet:
- * protein is fixed per kg bodyweight, fat is ~25% of calories, fiber
- * follows the 14g/1000kcal guideline (min. 30g), carbs fill the rest.
+ * Derives macro targets for a given daily calorie budget: protein is fixed
+ * per kg bodyweight, fat is ~25% of calories, fiber follows the
+ * 14g/1000kcal guideline (min. 30g), carbs fill the rest.
+ */
+export function deriveTargetsFromKcal(
+  kcal: number,
+  weightKg: number,
+  goal: Goal,
+): Targets {
+  const roundedKcal = Math.round(kcal);
+  const protein = Math.round(weightKg * PROTEIN_PER_KG[goal]);
+  const fat = Math.round((roundedKcal * 0.25) / 9);
+  const fiber = Math.max(30, Math.round((roundedKcal / 1000) * 14));
+
+  const kcalFromProteinAndFat = protein * 4 + fat * 9;
+  const carbs = Math.max(0, Math.round((roundedKcal - kcalFromProteinAndFat) / 4));
+
+  return { kcal: roundedKcal, carbs, protein, fat, fiber };
+}
+
+/**
+ * Derives daily macro targets for a vegan muscle-building diet, based on
+ * the user's stated activity level (see calculateTargetsWithGarminBoost for
+ * a version that substitutes today's actual logged training instead).
  */
 export function calculateTargets(profile: UserProfile): Targets {
   const tdee = calculateTdee(profile);
-  const kcal = Math.round(tdee * GOAL_KCAL_ADJUSTMENT[profile.goal]);
+  const kcal = tdee * GOAL_KCAL_ADJUSTMENT[profile.goal];
+  return deriveTargetsFromKcal(kcal, profile.weightKg, profile.goal);
+}
 
-  const protein = Math.round(profile.weightKg * PROTEIN_PER_KG[profile.goal]);
-  const fat = Math.round((kcal * 0.25) / 9);
-  const fiber = Math.max(30, Math.round((kcal / 1000) * 14));
-
-  const kcalFromProteinAndFat = protein * 4 + fat * 9;
-  const carbs = Math.max(0, Math.round((kcal - kcalFromProteinAndFat) / 4));
-
-  return { kcal, carbs, protein, fat, fiber };
+/**
+ * Same as calculateTargets, but replaces the generic activity-level
+ * multiplier with BMR at a sedentary baseline plus the calories actually
+ * burned in Garmin-logged training today - a more accurate, day-specific
+ * estimate once real training data is available.
+ */
+export function calculateTargetsWithGarminBoost(
+  profile: UserProfile,
+  activeCaloriesToday: number,
+): Targets {
+  const baselineTdee = calculateBmr(profile) * ACTIVITY_FACTORS.sedentary;
+  const kcal = (baselineTdee + activeCaloriesToday) * GOAL_KCAL_ADJUSTMENT[profile.goal];
+  return deriveTargetsFromKcal(kcal, profile.weightKg, profile.goal);
 }
 
 export function scaleMacros(
