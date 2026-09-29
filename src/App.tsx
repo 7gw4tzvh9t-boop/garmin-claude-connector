@@ -3,16 +3,19 @@ import DiaryPage from "./components/DiaryPage";
 import ScanPage from "./components/ScanPage";
 import GoalsPage, { DEFAULT_PROFILE } from "./components/GoalsPage";
 import MealPlanPage from "./components/MealPlanPage";
-import { getProfile } from "./lib/db";
-import { calculateTargets } from "./lib/nutrition";
-import type { UserProfile } from "./types";
+import TrainingPage from "./components/TrainingPage";
+import { getProfile, todayIso } from "./lib/db";
+import { calculateTargets, calculateTargetsWithGarminBoost } from "./lib/nutrition";
+import { activityCaloriesForDate, fetchRecentActivities, getGarminConfig } from "./lib/garmin";
+import type { GarminConfig, UserProfile } from "./types";
 
-type Tab = "diary" | "scan" | "plan" | "goals";
+type Tab = "diary" | "scan" | "plan" | "training" | "goals";
 
 const TABS: { id: Tab; icon: string; label: string }[] = [
   { id: "diary", icon: "📔", label: "Tagebuch" },
   { id: "scan", icon: "📷", label: "Scannen" },
   { id: "plan", icon: "🥗", label: "Ernährung" },
+  { id: "training", icon: "⌚", label: "Training" },
   { id: "goals", icon: "🎯", label: "Ziele" },
 ];
 
@@ -21,6 +24,8 @@ export default function App() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [refreshSignal, setRefreshSignal] = useState(0);
+  const [garminConfig, setGarminConfig] = useState<GarminConfig | null>(() => getGarminConfig());
+  const [activeCaloriesToday, setActiveCaloriesToday] = useState<number | null>(null);
 
   useEffect(() => {
     getProfile().then((p) => {
@@ -29,9 +34,32 @@ export default function App() {
     });
   }, []);
 
+  useEffect(() => {
+    if (!garminConfig?.useForTargets) {
+      setActiveCaloriesToday(null);
+      return;
+    }
+    let cancelled = false;
+    fetchRecentActivities(garminConfig, 20)
+      .then((activities) => {
+        if (cancelled) return;
+        setActiveCaloriesToday(activityCaloriesForDate(activities, todayIso()));
+      })
+      .catch(() => {
+        if (!cancelled) setActiveCaloriesToday(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [garminConfig]);
+
   if (!profileLoaded) return null;
 
-  const targets = calculateTargets(profile ?? DEFAULT_PROFILE);
+  const effectiveProfile = profile ?? DEFAULT_PROFILE;
+  const targets =
+    garminConfig?.useForTargets && activeCaloriesToday !== null
+      ? calculateTargetsWithGarminBoost(effectiveProfile, activeCaloriesToday)
+      : calculateTargets(effectiveProfile);
 
   return (
     <>
@@ -51,6 +79,7 @@ export default function App() {
           />
         )}
         {tab === "plan" && <MealPlanPage targets={targets} profile={profile} />}
+        {tab === "training" && <TrainingPage onConfigChanged={setGarminConfig} />}
         {tab === "goals" && (
           <GoalsPage profile={profile} onSaved={(p) => setProfile(p)} />
         )}
