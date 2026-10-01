@@ -35,7 +35,19 @@ export default function BarcodeScanner({
     scanner
       .start(
         { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 260, height: 140 } },
+        {
+          fps: 10,
+          qrbox: { width: 280, height: 160 },
+          videoConstraints: {
+            facingMode: "environment",
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+            // Non-standard but supported on Chrome/Android: without it some
+            // phones lock focus once at start and never re-focus on a
+            // close-up barcode, which is the "won't focus" symptom.
+            advanced: [{ focusMode: "continuous" } as MediaTrackConstraintSet],
+          },
+        },
         (decodedText) => {
           if (detectedRef.current) return;
           detectedRef.current = true;
@@ -45,6 +57,14 @@ export default function BarcodeScanner({
           // per-frame decode miss - expected while aiming the camera
         },
       )
+      .then(() => {
+        // Best effort: not all browsers/devices accept this constraint.
+        scanner.applyVideoConstraints({
+          advanced: [{ focusMode: "continuous" } as MediaTrackConstraintSet],
+        }).catch(() => {
+          /* continuous autofocus not supported on this device/browser */
+        });
+      })
       .catch((err) => {
         setError(
           err?.message?.includes("NotAllowedError") || String(err).includes("Permission")
@@ -67,12 +87,23 @@ export default function BarcodeScanner({
     };
   }, [onDetected]);
 
+  function refocus() {
+    // Re-applying the constraint nudges some devices into re-focusing
+    // immediately instead of waiting for their own autofocus cycle.
+    scannerRef.current?.applyVideoConstraints({
+      advanced: [{ focusMode: "continuous" } as MediaTrackConstraintSet],
+    }).catch(() => {
+      /* continuous autofocus not supported on this device/browser */
+    });
+  }
+
   return (
     <div>
-      <div id={ELEMENT_ID} className="scanner-box" />
+      <div id={ELEMENT_ID} className="scanner-box" onClick={refocus} />
       {error && <p className="error-box">{error}</p>}
       <p className="muted" style={{ fontSize: "0.8rem" }}>
-        Barcode mittig im Rahmen platzieren – Fokus etwas Abstand halten (10-15 cm).
+        Barcode mittig im Rahmen platzieren, 10-15 cm Abstand halten. Bild unscharf? Kurz auf das
+        Kamerabild tippen, um neu zu fokussieren.
       </p>
     </div>
   );
